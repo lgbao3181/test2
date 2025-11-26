@@ -6,6 +6,7 @@ import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 
 export default function ModalScreen() {
     const [db,setDb]=useState<SQLiteDatabase|null>(null)
+    let dulieu:object[]
     useEffect(()=>{
          async function taoDb(){
             const db_t= await taoMoi()
@@ -17,7 +18,7 @@ export default function ModalScreen() {
 <SafeAreaProvider>
     <SafeAreaView>
         <Text>SImple COntaact</Text>
-        
+        <Text>{db?.toString()}</Text>
     </SafeAreaView>
 </SafeAreaProvider>
   );
