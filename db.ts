@@ -20,6 +20,11 @@ export async function taoMoi(){
     `);
   }
 
-  console.log(await db.getAllAsync('SELECT * FROM DanhBa'))
+  //console.log(await db.getAllAsync('SELECT * FROM DanhBa'))
     return db
+}
+
+export async function layHet(db:SQLite.SQLiteDatabase){
+    const all= await db.getAllAsync('SELECT * FROM DanhBa');
+    return all
 }
