@@ -1,4 +1,5 @@
 import { taoMoi } from '@/db';
+import AntDesign from '@expo/vector-icons/AntDesign';
 import Fontisto from '@expo/vector-icons/Fontisto';
 import { SQLiteDatabase } from 'expo-sqlite';
 import { useEffect, useState } from 'react';
@@ -41,6 +42,9 @@ export default function ModalScreen() {
                   {
                     item.favorite ? <Fontisto name="favorite" size={24} color="black" /> : <></>
                   }
+                  <TouchableOpacity onPress={()=>Favorite(item)}>
+                    <AntDesign name="star" size={24} color= {item.favorite ? "#aaa12bff":  "black"} />
+                  </TouchableOpacity>
                   
             </View>
 
@@ -56,7 +60,18 @@ export default function ModalScreen() {
             const danhba_t:danhba[]= await db?.getAllAsync('SELECT * FROM DanhBa')
             setDanhBa(danhba_t)
         }
+    }
 
+    async function Favorite(item:danhba){
+      if(item.favorite===0)
+        await db?.runAsync('UPDATE DanhBa SET favorite = ? WHERE id = ?', [1, item.id]);
+      else
+        await db?.runAsync('UPDATE DanhBa SET favorite = ? WHERE id = ?', [0, item.id]);
+      setAdd(false)
+      if(db){
+          const danhba_t:danhba[]= await db?.getAllAsync('SELECT * FROM DanhBa')
+          setDanhBa(danhba_t)
+      }
     }
   return (
 <SafeAreaProvider>
