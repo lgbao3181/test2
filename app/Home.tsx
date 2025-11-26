@@ -2,7 +2,7 @@ import { taoMoi } from '@/db';
 import Fontisto from '@expo/vector-icons/Fontisto';
 import { SQLiteDatabase } from 'expo-sqlite';
 import { useEffect, useState } from 'react';
-import { FlatList, StyleSheet, Text, View } from 'react-native';
+import { FlatList, Modal, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 
 export default function ModalScreen() {
@@ -16,6 +16,10 @@ export default function ModalScreen() {
     }
     const [db,setDb]=useState<SQLiteDatabase|null>(null)
     const [danhBa,setDanhBa]=useState<danhba[]>([])
+    const [add,setAdd]=useState(false)
+    const [nameAdd,setNameAdd]=useState<string>("")
+    const [phoneAdd,setPhoneAdd]=useState<string>("")
+    const [emailAdd,setEmailAdd]=useState<string>("")
     useEffect(()=>{
          async function taoDb(){
             const db_t= await taoMoi()
@@ -43,6 +47,17 @@ export default function ModalScreen() {
         </View>
         )
     }
+
+    async function Add(){
+        await db?.runAsync('INSERT INTO DanhBa (name, phone, email) VALUES (?, ?, ?);',
+            [nameAdd, phoneAdd,emailAdd])
+        setAdd(false)
+        if(db){
+            const danhba_t:danhba[]= await db?.getAllAsync('SELECT * FROM DanhBa')
+            setDanhBa(danhba_t)
+        }
+
+    }
   return (
 <SafeAreaProvider>
     <SafeAreaView>
@@ -53,6 +68,23 @@ export default function ModalScreen() {
         renderItem={({item})=>Hienthi(item)}
         />
 
+        <TouchableOpacity style={styles.nut} onPress={()=>setAdd(true)}>
+            <Text> them lien he </Text>
+        </TouchableOpacity>
+        <Modal visible={add}
+        > 
+            <View>
+                <Text> them lien he </Text>
+                <TextInput style={styles.input} placeholder='name' onChangeText={value=>setNameAdd(value)}></TextInput>
+                <TextInput style={styles.input} placeholder='phone' onChangeText={value=>setPhoneAdd(value)}></TextInput>
+                <TextInput style={styles.input} placeholder='email' onChangeText={value=>setEmailAdd(value)}></TextInput>
+
+                <TouchableOpacity style={styles.nut}
+                onPress={()=>Add()}>
+                    <Text> ADD</Text>
+                </TouchableOpacity>
+            </View>
+        </Modal>
     </SafeAreaView>
 </SafeAreaProvider>
   );
@@ -69,4 +101,13 @@ const styles = StyleSheet.create({
     marginTop: 15,
     paddingVertical: 15,
   },
+  input:{
+    borderWidth:1,
+    borderColor:'black'
+  },
+  nut:{
+    borderWidth:1,
+    borderColor:'black',
+    backgroundColor:'#61cce1ff'
+  }
 });
