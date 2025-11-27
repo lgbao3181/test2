@@ -3,7 +3,7 @@ import AntDesign from '@expo/vector-icons/AntDesign';
 import Fontisto from '@expo/vector-icons/Fontisto';
 import { SQLiteDatabase } from 'expo-sqlite';
 import { useEffect, useState } from 'react';
-import { FlatList, Modal, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { Alert, FlatList, Modal, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 
 export default function ModalScreen() {
@@ -21,6 +21,9 @@ export default function ModalScreen() {
     const [nameAdd,setNameAdd]=useState<string>("")
     const [phoneAdd,setPhoneAdd]=useState<string>("")
     const [emailAdd,setEmailAdd]=useState<string>("")
+    const [edit,setEdit]=useState(false)
+    const [itemEdit,setItemEdit]= useState<Partial<danhba>>({}) 
+    const [itemDelete,setItemDelete]= useState<Partial<danhba>>({})
     useEffect(()=>{
          async function taoDb(){
             const db_t= await taoMoi()
@@ -35,7 +38,7 @@ export default function ModalScreen() {
 
     function Hienthi(item:danhba){
         return(
-        <View>
+          <TouchableOpacity onLongPress={()=>{setItemEdit(item),setEdit(true)}}>
             <View style={{flexDirection:'row',justifyContent:'space-around'}}>
                   <Text> name:{item.name} </Text>
                   <Text> Phone:{item.phone}</Text>
@@ -45,33 +48,68 @@ export default function ModalScreen() {
                   <TouchableOpacity onPress={()=>Favorite(item)}>
                     <AntDesign name="star" size={24} color= {item.favorite ? "#aaa12bff":  "black"} />
                   </TouchableOpacity>
-                  
-            </View>
 
-        </View>
+                  <TouchableOpacity style={styles.nut} onPress={()=>PressXoa(item)}>
+                    <Text> Xoa</Text>
+                  </TouchableOpacity>
+            </View>      
+        </TouchableOpacity>
         )
     }
 
+    function PressXoa(item:danhba){
+      Alert.alert("Xác nhận xóa",
+                `ban muon xoa${item.name}`,
+                [
+                  {
+                    text:'huy',
+                    style:'cancel'
+                  },
+                  {
+                    text:'xac nhan',
+                    style:'destructive',
+                    onPress:()=>Delete(item)
+                  }
+                ]
+              )
+    }
+
     async function Add(){
+        if(!db) return
         await db?.runAsync('INSERT INTO DanhBa (name, phone, email) VALUES (?, ?, ?);',
             [nameAdd, phoneAdd,emailAdd])
         setAdd(false)
-        if(db){
-            const danhba_t:danhba[]= await db?.getAllAsync('SELECT * FROM DanhBa')
-            setDanhBa(danhba_t)
-        }
+        const danhba_t:danhba[]= await db?.getAllAsync('SELECT * FROM DanhBa')
+        setDanhBa(danhba_t)
+
     }
 
     async function Favorite(item:danhba){
+      if(!db) return
       if(item.favorite===0)
         await db?.runAsync('UPDATE DanhBa SET favorite = ? WHERE id = ?', [1, item.id]);
       else
         await db?.runAsync('UPDATE DanhBa SET favorite = ? WHERE id = ?', [0, item.id]);
-      setAdd(false)
-      if(db){
+        const danhba_t:danhba[]= await db?.getAllAsync('SELECT * FROM DanhBa')
+        setDanhBa(danhba_t)
+
+    }//runAsync không bao giờ chấp nhận giá trị đầu vào là null, underfined, phỉa là giá trị có thật, 
+
+    async function Edit(){
+      if(!db) return
+         await db?.runAsync('UPDATE DanhBa SET name = ?, phone = ?, email = ? WHERE id = ?', 
+           [itemEdit?.name??'', itemEdit?.phone??'', itemEdit?.email??'', itemEdit?.id??0]);
+      setEdit(false)
           const danhba_t:danhba[]= await db?.getAllAsync('SELECT * FROM DanhBa')
           setDanhBa(danhba_t)
-      }
+
+    }
+
+    async function Delete(item:danhba){
+      if(!db || !item.id) return
+      await db.runAsync('DELETE FROM DanhBa WHERE id = ?', [item?.id]);
+      const danhba_t:danhba[] = await db.getAllAsync('SELECT * FROM DanhBa')
+      setDanhBa(danhba_t)
     }
   return (
 <SafeAreaProvider>
@@ -79,14 +117,14 @@ export default function ModalScreen() {
         <Text>SImple COntaact</Text>
         <FlatList
         data={danhBa}
-        keyExtractor={(item,index)=>item.id??index.toString()}
+        keyExtractor={(item,index)=>item.id.toString()??index.toString()}
         renderItem={({item})=>Hienthi(item)}
         />
 
         <TouchableOpacity style={styles.nut} onPress={()=>setAdd(true)}>
             <Text> them lien he </Text>
         </TouchableOpacity>
-        <Modal visible={add}
+        <Modal visible={add} onRequestClose={()=>setAdd(false)}
         > 
             <View>
                 <Text> them lien he </Text>
@@ -99,6 +137,26 @@ export default function ModalScreen() {
                     <Text> ADD</Text>
                 </TouchableOpacity>
             </View>
+        </Modal>
+        <Modal visible={edit} onRequestClose={()=>setEdit(false)}>
+          <View>
+            <Text> chienh sua lien he</Text>
+                <TextInput style={styles.input} value={itemEdit?.name} 
+                onChangeText={value=>setItemEdit(pre=>{
+                  return {...pre,name:value};
+                  })}></TextInput>
+                <TextInput style={styles.input} value={itemEdit?.phone}
+                onChangeText={(value)=>setItemEdit(pre=>({...pre,phone:value}))}
+                ></TextInput>
+                <TextInput style={styles.input} value={itemEdit?.email}
+                onChangeText={(value)=>setItemEdit(pre=>({...pre,email:value}))}
+                ></TextInput>
+
+                <TouchableOpacity style={styles.nut}
+                onPress={()=>Edit()}>
+                    <Text> Edit</Text>
+                </TouchableOpacity>
+          </View>
         </Modal>
     </SafeAreaView>
 </SafeAreaProvider>
